@@ -1,32 +1,35 @@
 {
-  "name": "Browser",
+  "name": "VueTree",
   "version": "1.0.0",
   "description": "",
   "dependencies": {
-    "blob-util": "^2.0.2",
-    "chokidar": "^2.0.4",
-    "fs": "^0.0.1-security",
+    "vue": "^2.6.11",
+    "vued3tree": "^5.1.0",
     "ws": "^7.2.0",
     "yarn": "^1.22.4"
   },
   "devDependencies": {
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.11.0",
+    "@babel/preset-env": "^7.11.0",
+    "babel-loader": "^8.1.0",
+    "bootstrap": "^3.4.1",
     "css-loader": "^4.2.0",
-    "file-loader": "^5.0.2",
-    "jqtree": "^1.4.9",
-    "jquery": "^3.5.0",
-    "vue": "^2.6.11",
+    "file-loader": "^6.0.0",
+    "html-webpack-plugin": "^4.3.0",
     "vue-loader": "^15.9.3",
     "vue-style-loader": "^4.1.2",
     "vue-template-compiler": "^2.6.11",
-    "vued3tree": "^5.1.0",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.12"
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "npm run dev",
+    "dev": "webpack-dev-server --mode development",
+    "prod": "webpack --mode production"
   },
   "keywords": [],
-  "author": "Yuki Tamazawa",
+  "author": "sondt",
   "license": "MIT"
 }
