@@ -91,23 +91,21 @@ extension AppDelegate {
 #endif
 ```
 
-### Installing 
+## Installing 
 
-```
-$ npm install yarn
-```
-
-### Starting the websocke server
+### Starting the websocket server
 
 ```shell
-$ npx yarn install
+$ cd WebSocketServer
+$ npm install
 $ node index.js
 ```
 
 ## Open the page.
 
 ```shell
-$ npx yarn install
-$ npx webpack
-$ open ./public/index.html
+$ cd Browser
+$ npm install
+$ npm start
+open localhost:8088 in Chrome/Safari browser
 ```
