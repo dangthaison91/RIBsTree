@@ -11,142 +11,145 @@ import UIKit
 import RxSwift
 import RIBs
 
-public protocol RIBsTreeViewer {
-    init(router: Routing, options: [RIBsTreeViewerOption]?)
-    func start()
-    func stop()
-}
-
-public enum RIBsTreeViewerOption {
-    case webSocketURL(String)
-    case monitoringIntervalMillis(Int)
-}
-
 @available(iOS 13.0, *)
-public class RIBsTreeViewerImpl: RIBsTreeViewer {
+public class RIBsTreeViewer {
+    lazy var appNode = RIBNode(nodeId: "app_node", name: "App")
+    lazy var ribTree = TreeNode<RIBNode>(value: appNode)
+    
+    private lazy var webSocket: WebSocketClient = {
+        guard let url = URL(string: socketURL) else {
+            fatalError("Cannot get Socket URL from \(socketURL)")
+        }
+        return WebSocketClient(url: url)
+    }()
 
-    private let router: Routing
-    private let webSocket: WebSocketClient
-    private let monitoringIntervalMillis: Int
-    private var watchingDisposable: Disposable?
-
-    required public init(router: Routing, options: [RIBsTreeViewerOption]?) {
-        self.router = router
-
-        var webSocketURLString = "ws://0.0.0.0:8080"
-        var monitoringIntervalMillis = 1000
-
-        options?.forEach({ option in
-            switch option {
-            case .webSocketURL(let url):
-                webSocketURLString = url
-                break
-            case .monitoringIntervalMillis(let intervalMillis):
-                monitoringIntervalMillis = intervalMillis
-                break
-            }
-        })
-
-        self.monitoringIntervalMillis = monitoringIntervalMillis
-        self.webSocket = WebSocketClient.init(url: URL(string: webSocketURLString)!)
-        self.webSocket.delegate = self
+    let socketURL: String
+    
+    private let disposeBag = DisposeBag()
+    
+    public init(socketURL: String = "ws://0.0.0.0:8080") {
+        self.socketURL = socketURL
     }
 
-    public func start() {
+    public func start(from router: Routing) {
         webSocket.connect()
-        watchingDisposable = Observable<Int>.interval(.milliseconds(monitoringIntervalMillis), scheduler: MainScheduler.instance)
-            .map { [unowned self] _ in
-                self.tree(router: self.router)
-        }
-        .distinctUntilChanged { a, b in
-            NSDictionary(dictionary: a).isEqual(to: b)
-        }
-        .subscribe(onNext: { [weak self] in
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: $0)
-                let jsonString = String(bytes: jsonData, encoding: .utf8)!
-                self?.webSocket.send(text: jsonString)
-            } catch {
-            }
-        })
-
+        configureTracing(for: router, isRoot: true)
     }
 
     public func stop() {
-        watchingDisposable?.dispose()
-        watchingDisposable = nil
         webSocket.disconnect()
     }
-
-    private func tree(router: Routing, appendImage: Bool = false) -> [String: Any] {
-        var currentRouter = String(describing: type(of: router))
-        if router is ViewableRouting {
-            currentRouter += " (View) "
+    
+    func configureTracing(for router: Routing, isRoot: Bool) {
+        if isRoot {
+            updateTree(for: router, parent: router)
         }
-        if router.children.isEmpty {
-            return ["name": currentRouter, "children": []]
-        } else {
-            return ["name": currentRouter, "children": router.children.map { tree(router: $0, appendImage: appendImage) }]
-        }
+        
+        let resignActive = router.interactable.isActiveStream.skip(1).filter { $0 == false }
+        
+        let willAttachChild = router
+            .lifecycle
+            .compactMap { lifecycle -> Routing? in
+                if case let .willAttachChild(child) = lifecycle {
+                    return child
+                } else {
+                    return nil
+                }
+            }
+            .takeUntil(resignActive)
+        
+        willAttachChild
+            .subscribe(onNext: { [weak self] child in
+                /// Recursive observe child router
+                self?.configureTracing(for: child, isRoot: false)
+            })
+            .disposed(by: disposeBag)
+        
+        
+        willAttachChild
+            .flatMap { child -> Observable<Routing> in
+                let capturedChild = child
+                return child.interactable.isActiveStream.filter { $0 }.compactMap { [weak capturedChild] _ in return capturedChild }
+            }
+            .subscribe(onNext: { [weak self] child in
+                self?.updateTree(for: child, parent: router)
+            })
+            .disposed(by: disposeBag)
+        
+        router
+            .lifecycle
+            .compactMap { lifecycle -> Routing? in
+                if case let .willDetachChild(child) = lifecycle {
+                    return child
+                } else {
+                    return nil
+                }
+            }
+            .takeUntil(resignActive)
+            .subscribe(onNext: { [weak self] child in
+                self?.removeTree(for: child, parent: router)
+            })
+            .disposed(by: disposeBag)
+        
     }
-
-    private func findRouter(target: String, router: Routing) -> Routing? {
-        let currentRouter = String(describing: type(of: router))
-        if target == currentRouter {
-            return router
-        } else if !router.children.isEmpty {
-            return router.children.compactMap { findRouter(target: target, router: $0) }.first
-        } else {
-            return nil
-        }
-    }
-}
-
-@available(iOS 13.0, *)
-extension RIBsTreeViewerImpl {
-    private func captureView(from targetRouter: String) -> Data? {
-        guard let router = findRouter(target: targetRouter, router: router) as? ViewableRouting,
-            let view = router.viewControllable.uiviewController.view,
-            let captureImage = image(with: view) else {
-                return nil
-        }
-        return captureImage.pngData()
-    }
-
-    private func image(with view: UIView) -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(view.bounds.size, view.isOpaque, 0.0)
-        defer { UIGraphicsEndImageContext() }
-        if let context = UIGraphicsGetCurrentContext() {
-            view.layer.render(in: context)
-            let image = UIGraphicsGetImageFromCurrentImageContext()
-            return image
-        }
-        return nil
-    }
-}
-
-@available(iOS 13.0, *)
-extension RIBsTreeViewerImpl: WebSocketClientDelegate {
-    func onConnected(client: WebSocketClient) {
-    }
-
-    func onDisconnected(client: WebSocketClient) {
-    }
-
-    func onMessage(client: WebSocketClient, text: String) {
-        // text == routerName
-        DispatchQueue.main.async {
-            if let data = self.captureView(from: text) {
-                self.webSocket.send(data: data)
+    
+    func updateTree(for router: Routing, parent: Routing) {
+        defer {
+            if let data = try? JSONEncoder().encode(ribTree) {
+                webSocket.sendJSONData(data)
             }
         }
+        
+        let nextNode = node(for: router)
+        let parenNode = node(for: parent)
+        let treeNode = TreeNode<RIBNode>(value: nextNode)
+        
+        if let currentParent = ribTree.search(parenNode) {
+            currentParent.addChild(treeNode)
+        } else {
+            ribTree.addChild(treeNode)
+        }
     }
 
-    func onMessage(client: WebSocketClient, data: Data) {
-    }
+    func removeTree(for router: Routing, parent: Routing) {
+        defer {
+            if let data = try? JSONEncoder().encode(ribTree) {
+                webSocket.sendJSONData(data)
+            }
+        }
+        
+        let nextNode = node(for: router)
+        let treeNode = TreeNode<RIBNode>(value: nextNode)
+        let parenNode = node(for: parent)
 
-    func onError(client: WebSocketClient, error: Error) {
+        
+        if let parentNode = ribTree.search(parenNode) {
+            parentNode.detacChild(treeNode)
+        } else {
+            debugPrint("Cannot detach child \(nextNode)")
+        }
     }
+    
+    private func node(for router: Routing) -> RIBNode {
+        let name = String(describing: type(of: router))
+        let routerId = "\(ObjectIdentifier(router).hashValue)"
+        let node = RIBNode(nodeId: routerId, name: name)
+        return node
+    }
+}
+
+@available(iOS 13.0, *)
+extension RIBsTreeViewer: WebSocketClientDelegate {
+    
+    func onConnected(client: WebSocketClient) {}
+
+    func onDisconnected(client: WebSocketClient) {}
+
+    func onMessage(client: WebSocketClient, text: String) {}
+
+    func onMessage(client: WebSocketClient, data: Data) {}
+
+    func onError(client: WebSocketClient, error: Error) {}
 }
 
 protocol WebSocketClientDelegate: class {
@@ -227,7 +230,6 @@ class WebSocketClient: NSObject {
             self.listen()
         }
     }
-
 }
 
 @available(iOS 13.0, *)
@@ -238,5 +240,17 @@ extension WebSocketClient: URLSessionWebSocketDelegate {
 
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         self.delegate?.onDisconnected(client: self)
+    }
+}
+
+@available(iOS 13.0, *)
+extension WebSocketClient {
+    func sendJSONData(_ data: Data) {
+        do {
+            let jsonString = String(bytes: data, encoding: .utf8)!
+            self.send(text: jsonString)
+        } catch {
+            debugPrint(error)
+        }
     }
 }
