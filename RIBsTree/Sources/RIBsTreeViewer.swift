@@ -59,6 +59,7 @@ public class RIBsTreeViewer {
             .takeUntil(resignActive)
         
         willAttachChild
+            .observeOn(ConcurrentDispatchQueueScheduler(qos: .default))
             .subscribe(onNext: { [weak self] child in
                 /// Recursive observe child router
                 self?.configureTracing(for: child, isRoot: false)
@@ -71,6 +72,7 @@ public class RIBsTreeViewer {
                 let capturedChild = child
                 return child.interactable.isActiveStream.filter { $0 }.compactMap { [weak capturedChild] _ in return capturedChild }
             }
+            .observeOn(ConcurrentDispatchQueueScheduler(qos: .default))
             .subscribe(onNext: { [weak self] child in
                 self?.updateTree(for: child, parent: router)
             })
@@ -86,6 +88,7 @@ public class RIBsTreeViewer {
                 }
             }
             .takeUntil(resignActive)
+            .observeOn(ConcurrentDispatchQueueScheduler(qos: .default))
             .subscribe(onNext: { [weak self] child in
                 self?.removeTree(for: child, parent: router)
             })
