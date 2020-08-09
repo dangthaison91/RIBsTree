@@ -289,7 +289,7 @@
           </div>
         </div>
       </div>
-    </div> -->
+    </div>-->
 
     <div class="tree">
       <tree
@@ -358,7 +358,7 @@
               <i class="fa fa-trash" aria-hidden="true"></i>
             </button>
           </div>
-        </template> -->
+        </template>-->
       </tree>
     </div>
   </div>
@@ -366,9 +366,7 @@
 
 <script>
 import { tree } from "vued3tree";
-import data from "./data/data";
-// import {getGremlin} from './src/gremlinConfiguration'
-import noBehavior from "./src/behaviors/noBehavior";
+
 let currentId = 500;
 
 const removeElement = (arr, element) => {
@@ -379,15 +377,19 @@ const removeElement = (arr, element) => {
   arr.splice(index, 1);
 };
 
-Object.assign(data, {
+const sock = new WebSocket("ws://0.0.0.0:8080");
+
+var treeJson = { Graph: { tree: { children: [] } } };
+
+Object.assign(treeJson, {
   type: "tree",
   layoutType: "horizontal",
   duration: 750,
-  Marginx: 30,
-  Marginy: 30,
-  radius: 3,
+  Marginx: 12,
+  Marginy: 12,
+  radius: 4,
   leafTextMargin: 6,
-  nodeTextMargin: 6,
+  nodeTextMargin: 16,
   nodeText: "text",
   currentData: null,
   zoomable: true,
@@ -400,14 +402,31 @@ Object.assign(data, {
   events: [],
 });
 
+sock.addEventListener("message", (e) => {
+  if (typeof e.data === "string") {
+    try {
+      let json = JSON.parse("[" + e.data + "]");
+      treeJson.Graph.tree.children = json;
+      // console.log(treeJson.Graph.tree);
+    } catch (e) {
+      console.log(e);
+    }
+  } else {
+    // const blob = new Blob([e.data], {
+    //     type: 'image/png'
+    // });
+    // var blobURL = blobUtil.createObjectURL(blob);
+    // document.getElementById('capture').setAttribute('src', blobURL);
+  }
+});
+
 export default {
   name: "app",
   data() {
-    return data;
+    return treeJson;
   },
   components: {
     tree,
-    noBehavior,
   },
   methods: {
     async do(action) {
@@ -468,69 +487,6 @@ export default {
         this.isLoading = false;
       });
     },
-    gremlins() {
-      if (this.isUnderGremlinsAttack) {
-        this.horde.stop();
-        return;
-      }
-
-      const updateType = (type) => {
-        switch (type) {
-          case "vertical":
-            return "circular";
-
-          case "circular":
-            return "horizontal";
-
-          case "horizontal":
-            return "vertical";
-        }
-      };
-
-      const updateNodeTextDisplay = (display) => {
-        switch (display) {
-          case "all":
-            return "leaves";
-
-          case "leaves":
-            return "extremities";
-
-          case "extremities":
-            return "all";
-        }
-      };
-
-      this.duration = 20;
-      const changeLayout = () => {
-        this.type = this.type === "tree" ? "cluster" : "tree";
-      };
-      const changeNode = () => {
-        this.linkLayout =
-          this.linkLayout === "bezier" ? "orthogonal" : "bezier";
-      };
-      const changeType = () => {
-        this.layoutType = updateType(this.layoutType);
-      };
-      const changeNodeTextDisplay = () => {
-        this.nodeTextDisplay = updateNodeTextDisplay(this.nodeTextDisplay);
-      };
-      const resetZoom = this.resetZoom.bind(this);
-      const [treeDiv] = this.$el.getElementsByClassName("tree");
-      const [gremlinsButton] = this.$el.getElementsByClassName("btn-danger");
-      var horde = getGremlin(gremlinsButton, treeDiv, {
-        changeType,
-        changeLayout,
-        changeNode,
-        changeNodeTextDisplay,
-        resetZoom,
-      });
-      horde.after(() => {
-        this.isUnderGremlinsAttack = false;
-      });
-      horde.unleash();
-      this.horde = horde;
-      this.isUnderGremlinsAttack = true;
-    },
   },
 };
 </script>
@@ -546,25 +502,25 @@ export default {
 }
 
 .tree {
-  height: 800px;
+  height: 75vh;
+  width: 85vw;
 }
-
-.graph-root {
-  height: 800px;
-  width: 100%;
-}
-
-.feedback {
-  height: 50px;
-  line-height: 50px;
+.tree .nodetree text {
+  font-family: "Helvetica";
+  font-size: 13px;
   vertical-align: middle;
+  baseline-shift: -16;
+  text-anchor: start;
 }
 
-.log {
-  height: 200px;
-  overflow-x: auto;
-  overflow-y: auto;
-  overflow: auto;
-  text-align: left;
+.tree .nodetree circle {
+  fill: black;
+  radius: 4;
+}
+
+.tree .linktree {
+  stroke: black;
+  stroke-opacity: 0.8;
+  stroke-width: 2px;
 }
 </style>

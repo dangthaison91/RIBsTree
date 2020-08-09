@@ -28,11 +28,8 @@ module.exports = {
                 loader: 'vue-loader'
             },
             {
-                test: /\.css$/, 
-                use: [
-                    'vue-style-loader',
-                    'css-loader'
-                ]
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader'],
             },
             {
                 test: /\.(ttf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
