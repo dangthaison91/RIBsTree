@@ -1,7 +1,7 @@
 
 # RIBsTree
 Real Time Uber RIBs Tree
-![](./docs/logo.png)  
+![](./docs/ribtree.gif)  
 
 
 ## Using the Libraries
