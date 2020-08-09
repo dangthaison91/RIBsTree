@@ -407,7 +407,7 @@ sock.addEventListener("message", (e) => {
     try {
       let json = JSON.parse("[" + e.data + "]");
       treeJson.Graph.tree.children = json;
-      // console.log(treeJson.Graph.tree);
+      console.log(treeJson.Graph.tree);
     } catch (e) {
       console.log(e);
     }

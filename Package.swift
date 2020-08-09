@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "RIBsTreeViewerClient",
+    name: "RIBsTree",
     platforms: [.iOS(.v8)],
     products: [
-        .library(name: "RIBsTreeViewerClient", targets: ["RIBsTreeViewerClient"]),
+        .library(name: "RIBsTree", targets: ["RIBsTree"]),
     ],
     dependencies: [
         .package(url: "https://github.com/ReactiveX/RxSwift.git", from: "5.1.1"),
@@ -13,9 +13,9 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "RIBsTreeViewerClient",
+            name: "RIBsTree",
             dependencies: ["RxSwift", "RxCocoa", "RIBs"],
-            path: "./RIBsTreeViewerClient/Sources"
+            path: "./RIBsTree/Sources"
         )
     ]
 )
