@@ -1,19 +1,13 @@
-![](https://img.shields.io/github/license/srea/RIBsTreeViewerClient.svg) 
-[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
-# RIBsTreeViewer
 
+# RIBsTree
+Real Time Uber RIBs Tree
 ![](./docs/logo.png)  
 
-Real Time Uber RIBs Tree
-
-## Demo
-
-![](./docs/ribtree.gif)  
 
 ## Using the Libraries
 
 ### Swift Package Manager
-From Xcode 11, you can use `Swift Package Manager` to add Kingfisher to your project.
+From Xcode 11, you can use `Swift Package Manager` to add RIBsTree to your project.
 
 Select File > Swift Packages > Add Package Dependency. Enter https://github.com/dangthaison91/RIBsTree.git in the "Choose Package Repository" dialog.
 In the next page, specify the version resolving rule as "branch" with "master" as its earliest version.
@@ -66,3 +60,6 @@ $ npm install
 $ npm start
 open localhost:8088 in Chrome/Safari browser
 ```
+
+Credit:
+RIBsTreeViewer: https://github.com/srea/RIBsTreeViewerClient
