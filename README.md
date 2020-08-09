@@ -8,7 +8,7 @@ Real Time Uber RIBs Tree
 
 ## Demo
 
-![](./docs/ribtree.mp4)  
+![](./docs/ribtree.gif)  
 
 ## Using the Libraries
 
