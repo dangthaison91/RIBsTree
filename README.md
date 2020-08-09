@@ -12,48 +12,22 @@ Real Time viewing attached RIBs Tree on Browser
 
 ## Using the Libraries
 
-### XCFramework
+### Swift Package Manager
+From Xcode 11, you can use `Swift Package Manager` to add Kingfisher to your project.
 
-Add the xcframework to your project。
+Select File > Swift Packages > Add Package Dependency. Enter https://github.com/dangthaison91/RIBsTree.git in the "Choose Package Repository" dialog.
+In the next page, specify the version resolving rule as "branch" with "master" as its earliest version.
+After Xcode checking out the source and resolving the version, you can choose the "RIBsTree" library and add it to your app target.
 
-```
-./Products/RIBsTreeViewerClient.xcframework
-```
-
-### CocoaPods
-
-This is not supported because the RIBs do not provide an up-to-date PodSpec, making it difficult to resolve dependencies.
-
-### Carthage
-
-```shell
-github "srea/RIBsTreeViewerClient"
-```
-
-```
-$ carthage update --platform iOS --no-use-binaries
-```
-
-#### Build Phase
-
-![](./docs/Carthage_BuildPhase.png)  
-![](./docs/Carthage_Embedded.png)
-
-Carthage CopyFrameworks (ONLY DEBUG)
-
-```shell
- if [ ${CONFIGURATION%%-*} == "Debug" ]; then
-    /usr/local/bin/carthage copy-frameworks
- fi
-```
 
 ## Basic setup
 
 ```swift
+import RIBsTree
+
 @UIApplicationMain
 public class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    private var ribsTreeViewer: RIBsTreeViewer? = nil
     
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         let window = UIWindow(frame: UIScreen.main.bounds)
@@ -64,31 +38,14 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         self.launchRouter = launchRouter
         urlHandler = result.urlHandler
         launchRouter.launch(from: window)
-        startRIBsTreeViewer(launchRouter: launchRouter)
+
+        #if DEBUG
+        RIBsTreeViewer().start(from: launchRouter)
+        #endif
+
         return true
     }
 }
-```
-
-```swift
-// MARK: - RIBsTreeViewer
-
-#if DEBUG
-import RIBsTreeViewerClient
-
-extension AppDelegate {
-    private func startRIBsTreeViewer(launchRouter: Routing) {
-        if #available(iOS 13.0, *) {
-            ribsTreeViewer = RIBsTreeViewerImpl.init(router: launchRouter,
-                                                     options: [.webSocketURL("ws://0.0.0.0:8080"),
-                                                               .monitoringIntervalMillis(1000)])
-            ribsTreeViewer?.start()
-        } else {
-            // RIBsTreeViewer is not supported OS version.
-        }
-    }
-}
-#endif
 ```
 
 ## Installing 
