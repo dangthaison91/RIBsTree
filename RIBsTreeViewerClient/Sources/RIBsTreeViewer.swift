@@ -152,16 +152,12 @@ extension RIBsTreeViewer: WebSocketClientDelegate {
     func onError(client: WebSocketClient, error: Error) {}
 }
 
+@available(iOS 13.0, *)
 protocol WebSocketClientDelegate: class {
-    @available(iOS 13.0, *)
     func onConnected(client: WebSocketClient)
-    @available(iOS 13.0, *)
     func onDisconnected(client: WebSocketClient)
-    @available(iOS 13.0, *)
     func onMessage(client: WebSocketClient, text: String)
-    @available(iOS 13.0, *)
     func onMessage(client: WebSocketClient, data: Data)
-    @available(iOS 13.0, *)
     func onError(client: WebSocketClient, error: Error)
 }
 
@@ -246,11 +242,7 @@ extension WebSocketClient: URLSessionWebSocketDelegate {
 @available(iOS 13.0, *)
 extension WebSocketClient {
     func sendJSONData(_ data: Data) {
-        do {
-            let jsonString = String(bytes: data, encoding: .utf8)!
-            self.send(text: jsonString)
-        } catch {
-            debugPrint(error)
-        }
+        let jsonString = String(bytes: data, encoding: .utf8)!
+        self.send(text: jsonString)
     }
 }
