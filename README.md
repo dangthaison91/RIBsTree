@@ -23,20 +23,17 @@ import RIBsTree
 
 @UIApplicationMain
 public class AppDelegate: UIResponder, UIApplicationDelegate {
-
     
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         let window = UIWindow(frame: UIScreen.main.bounds)
         self.window = window
 
-        let result = RootBuilder(dependency: AppComponent()).build()
-        let launchRouter = result.launchRouter
-        self.launchRouter = launchRouter
-        urlHandler = result.urlHandler
+        let router = RootBuilder(dependency: AppComponent()).build().launchRouter
+        self.launchRouter = router
         launchRouter.launch(from: window)
 
         #if DEBUG
-        RIBsTreeViewer().start(from: launchRouter)
+        RIBsTreeViewer().start(from: router)
         #endif
 
         return true
