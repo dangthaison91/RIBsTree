@@ -3,7 +3,7 @@
 
 Real Time Uber RIBs Tree
 
-![](./docs/ribtree.gif)  
+![](./docs/rib_tree.webp)  
 
 
 ## Using the Libraries
